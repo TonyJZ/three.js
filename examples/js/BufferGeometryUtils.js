@@ -2,7 +2,7 @@
  * @author mrdoob / http://mrdoob.com/
  */
 
-THREE.BufferGeometryUtils = {
+var BufferGeometryUtils = {
 
 	computeTangents: function ( geometry ) {
 
@@ -17,7 +17,7 @@ THREE.BufferGeometryUtils = {
 			 attributes.normal === undefined ||
 			 attributes.uv === undefined ) {
 
-			console.warn( 'THREE.BufferGeometry: Missing required attributes (index, position, normal or uv) in BufferGeometry.computeTangents()' );
+			console.warn( 'BufferGeometry: Missing required attributes (index, position, normal or uv) in BufferGeometry.computeTangents()' );
 			return;
 
 		}
@@ -383,3 +383,4 @@ THREE.BufferGeometryUtils = {
 	}
 
 };
+export {BufferGeometryUtils};

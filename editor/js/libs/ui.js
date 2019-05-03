@@ -1002,3 +1002,4 @@ UI.Modal.prototype.hide = function () {
 	return this;
 
 };
+export {UI};

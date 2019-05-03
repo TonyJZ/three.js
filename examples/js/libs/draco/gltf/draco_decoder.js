@@ -23,9 +23,10 @@ var Na=[gn,Hm,Im,jl,rm,Im,Ic,gl,Wl,jn,jn,Im,jn,Im,Im,Ih,Nj,Ih,Xj,Ch,Im,Zj,Mg,Im,
 
   return DracoDecoderModule;
 };
-if (typeof exports === 'object' && typeof module === 'object')
-  module.exports = DracoDecoderModule;
-else if (typeof define === 'function' && define['amd'])
-  define([], function() { return DracoDecoderModule; });
-else if (typeof exports === 'object')
-  exports["DracoDecoderModule"] = DracoDecoderModule;
+export {DracoDecoderModule};
+// if (typeof exports === 'object' && typeof module === 'object')
+//   module.exports = DracoDecoderModule;
+// else if (typeof define === 'function' && define['amd'])
+//   define([], function() { return DracoDecoderModule; });
+// else if (typeof exports === 'object')
+//   exports["DracoDecoderModule"] = DracoDecoderModule;

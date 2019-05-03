@@ -6,193 +6,194 @@
  * @author Don McCurdy / https://www.donmccurdy.com
  */
 
-THREE.GLTFLoader = ( function () {
+import {DRACOLoader} from "./DRACOLoader.js";
+import {DDSLoader} from "./DDSLoader.js";
+//import {BufferGeometryUtils } from "./BufferGeometryUtils.js"; //using BufferGeometryUtils is causeing error
+function GLTFLoader( manager ) {
 
-	function GLTFLoader( manager ) {
+    this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+    this.dracoLoader = null;
 
-		this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
-		this.dracoLoader = null;
+}
 
-	}
+GLTFLoader.prototype = {
 
-	GLTFLoader.prototype = {
+    constructor: GLTFLoader,
 
-		constructor: GLTFLoader,
+    crossOrigin: 'anonymous',
 
-		crossOrigin: 'anonymous',
+    load: function ( url, onLoad, onProgress, onError ) {
 
-		load: function ( url, onLoad, onProgress, onError ) {
+        var scope = this;
 
-			var scope = this;
+        var path = this.path !== undefined ? this.path : THREE.LoaderUtils.extractUrlBase( url );
 
-			var path = this.path !== undefined ? this.path : THREE.LoaderUtils.extractUrlBase( url );
+        var loader = new THREE.FileLoader( scope.manager );
 
-			var loader = new THREE.FileLoader( scope.manager );
+        loader.setResponseType( 'arraybuffer' );
 
-			loader.setResponseType( 'arraybuffer' );
+        loader.load( url, function ( data ) {
 
-			loader.load( url, function ( data ) {
+            try {
 
-				try {
+                scope.parse( data, path, onLoad, onError );
 
-					scope.parse( data, path, onLoad, onError );
+            } catch ( e ) {
 
-				} catch ( e ) {
+                if ( onError !== undefined ) {
 
-					if ( onError !== undefined ) {
+                    onError( e );
 
-						onError( e );
+                } else {
 
-					} else {
+                    throw e;
 
-						throw e;
+                }
 
-					}
+            }
 
-				}
+        }, onProgress, onError );
 
-			}, onProgress, onError );
+    },
 
-		},
+    setCrossOrigin: function ( value ) {
 
-		setCrossOrigin: function ( value ) {
+        this.crossOrigin = value;
+        return this;
 
-			this.crossOrigin = value;
-			return this;
+    },
 
-		},
+    setPath: function ( value ) {
 
-		setPath: function ( value ) {
+        this.path = value;
+        return this;
 
-			this.path = value;
-			return this;
+    },
 
-		},
+    setDRACOLoader: function ( dracoLoader ) {
 
-		setDRACOLoader: function ( dracoLoader ) {
+        this.dracoLoader = dracoLoader;
+        return this;
 
-			this.dracoLoader = dracoLoader;
-			return this;
+    },
 
-		},
+    parse: function ( data, path, onLoad, onError ) {
 
-		parse: function ( data, path, onLoad, onError ) {
+        var content;
+        var extensions = {};
 
-			var content;
-			var extensions = {};
+        if ( typeof data === 'string' ) {
 
-			if ( typeof data === 'string' ) {
+            content = data;
 
-				content = data;
+        } else {
 
-			} else {
+            var magic = THREE.LoaderUtils.decodeText( new Uint8Array( data, 0, 4 ) );
 
-				var magic = THREE.LoaderUtils.decodeText( new Uint8Array( data, 0, 4 ) );
+            if ( magic === BINARY_EXTENSION_HEADER_MAGIC ) {
 
-				if ( magic === BINARY_EXTENSION_HEADER_MAGIC ) {
+                try {
 
-					try {
+                    extensions[ EXTENSIONS.KHR_BINARY_GLTF ] = new GLTFBinaryExtension( data );
 
-						extensions[ EXTENSIONS.KHR_BINARY_GLTF ] = new GLTFBinaryExtension( data );
+                } catch ( error ) {
 
-					} catch ( error ) {
+                    if ( onError ) onError( error );
+                    return;
 
-						if ( onError ) onError( error );
-						return;
+                }
 
-					}
+                content = extensions[ EXTENSIONS.KHR_BINARY_GLTF ].content;
 
-					content = extensions[ EXTENSIONS.KHR_BINARY_GLTF ].content;
+            } else {
 
-				} else {
+                content = THREE.LoaderUtils.decodeText( new Uint8Array( data ) );
 
-					content = THREE.LoaderUtils.decodeText( new Uint8Array( data ) );
+            }
 
-				}
+        }
 
-			}
+        var json = JSON.parse( content );
 
-			var json = JSON.parse( content );
+        if ( json.asset === undefined || json.asset.version[ 0 ] < 2 ) {
 
-			if ( json.asset === undefined || json.asset.version[ 0 ] < 2 ) {
+            if ( onError ) onError( new Error( 'GLTFLoader: Unsupported asset. glTF versions >=2.0 are supported. Use LegacyGLTFLoader instead.' ) );
+            return;
 
-				if ( onError ) onError( new Error( 'THREE.GLTFLoader: Unsupported asset. glTF versions >=2.0 are supported. Use LegacyGLTFLoader instead.' ) );
-				return;
+        }
 
-			}
+        if ( json.extensionsUsed ) {
 
-			if ( json.extensionsUsed ) {
+            for ( var i = 0; i < json.extensionsUsed.length; ++ i ) {
 
-				for ( var i = 0; i < json.extensionsUsed.length; ++ i ) {
+                var extensionName = json.extensionsUsed[ i ];
+                var extensionsRequired = json.extensionsRequired || [];
 
-					var extensionName = json.extensionsUsed[ i ];
-					var extensionsRequired = json.extensionsRequired || [];
+                switch ( extensionName ) {
 
-					switch ( extensionName ) {
+                    case EXTENSIONS.KHR_LIGHTS_PUNCTUAL:
+                        extensions[ extensionName ] = new GLTFLightsExtension( json );
+                        break;
 
-						case EXTENSIONS.KHR_LIGHTS_PUNCTUAL:
-							extensions[ extensionName ] = new GLTFLightsExtension( json );
-							break;
+                    case EXTENSIONS.KHR_MATERIALS_UNLIT:
+                        extensions[ extensionName ] = new GLTFMaterialsUnlitExtension( json );
+                        break;
 
-						case EXTENSIONS.KHR_MATERIALS_UNLIT:
-							extensions[ extensionName ] = new GLTFMaterialsUnlitExtension( json );
-							break;
+                    case EXTENSIONS.KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS:
+                        extensions[ extensionName ] = new GLTFMaterialsPbrSpecularGlossinessExtension();
+                        break;
 
-						case EXTENSIONS.KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS:
-							extensions[ extensionName ] = new GLTFMaterialsPbrSpecularGlossinessExtension();
-							break;
+                    case EXTENSIONS.KHR_DRACO_MESH_COMPRESSION:
+                        extensions[ extensionName ] = new GLTFDracoMeshCompressionExtension( json, this.dracoLoader );
+                        break;
 
-						case EXTENSIONS.KHR_DRACO_MESH_COMPRESSION:
-							extensions[ extensionName ] = new GLTFDracoMeshCompressionExtension( json, this.dracoLoader );
-							break;
+                    case EXTENSIONS.MSFT_TEXTURE_DDS:
+                        extensions[ EXTENSIONS.MSFT_TEXTURE_DDS ] = new GLTFTextureDDSExtension();
+                        break;
 
-						case EXTENSIONS.MSFT_TEXTURE_DDS:
-							extensions[ EXTENSIONS.MSFT_TEXTURE_DDS ] = new GLTFTextureDDSExtension();
-							break;
+                    default:
 
-						default:
+                        if ( extensionsRequired.indexOf( extensionName ) >= 0 ) {
 
-							if ( extensionsRequired.indexOf( extensionName ) >= 0 ) {
+                            console.warn( 'GLTFLoader: Unknown extension "' + extensionName + '".' );
 
-								console.warn( 'THREE.GLTFLoader: Unknown extension "' + extensionName + '".' );
+                        }
 
-							}
+                }
 
-					}
+            }
 
-				}
+        }
 
-			}
+        var parser = new GLTFParser( json, extensions, {
 
-			var parser = new GLTFParser( json, extensions, {
+            path: path || this.path || '',
+            crossOrigin: this.crossOrigin,
+            manager: this.manager
 
-				path: path || this.path || '',
-				crossOrigin: this.crossOrigin,
-				manager: this.manager
+        } );
 
-			} );
+        parser.parse( function ( scene, scenes, cameras, animations, json ) {
 
-			parser.parse( function ( scene, scenes, cameras, animations, json ) {
+            var glTF = {
+                scene: scene,
+                scenes: scenes,
+                cameras: cameras,
+                animations: animations,
+                asset: json.asset,
+                parser: parser,
+                userData: {}
+            };
 
-				var glTF = {
-					scene: scene,
-					scenes: scenes,
-					cameras: cameras,
-					animations: animations,
-					asset: json.asset,
-					parser: parser,
-					userData: {}
-				};
+            addUnknownExtensionsToUserData( extensions, glTF, json );
 
-				addUnknownExtensionsToUserData( extensions, glTF, json );
+            onLoad( glTF );
 
-				onLoad( glTF );
+        }, onError );
 
-			}, onError );
+    }
 
-		}
-
-	};
+};
 
 	/* GLTFREGISTRY */
 
@@ -252,14 +253,14 @@ THREE.GLTFLoader = ( function () {
 	 */
 	function GLTFTextureDDSExtension() {
 
-		if ( ! THREE.DDSLoader ) {
+		if ( ! DDSLoader ) {
 
-			throw new Error( 'THREE.GLTFLoader: Attempting to load .dds texture without importing THREE.DDSLoader' );
+			throw new Error( 'GLTFLoader: Attempting to load .dds texture without importing DDSLoader' );
 
 		}
 
 		this.name = EXTENSIONS.MSFT_TEXTURE_DDS;
-		this.ddsLoader = new THREE.DDSLoader();
+		this.ddsLoader = new DDSLoader();
 
 	}
 
@@ -314,7 +315,7 @@ THREE.GLTFLoader = ( function () {
 					break;
 
 				default:
-					throw new Error( 'THREE.GLTFLoader: Unexpected light type, "' + lightDef.type + '".' );
+					throw new Error( 'GLTFLoader: Unexpected light type, "' + lightDef.type + '".' );
 
 			}
 
@@ -402,11 +403,11 @@ THREE.GLTFLoader = ( function () {
 
 		if ( this.header.magic !== BINARY_EXTENSION_HEADER_MAGIC ) {
 
-			throw new Error( 'THREE.GLTFLoader: Unsupported glTF-Binary header.' );
+			throw new Error( 'GLTFLoader: Unsupported glTF-Binary header.' );
 
 		} else if ( this.header.version < 2.0 ) {
 
-			throw new Error( 'THREE.GLTFLoader: Legacy binary file detected. Use LegacyGLTFLoader instead.' );
+			throw new Error( 'GLTFLoader: Legacy binary file detected. Use LegacyGLTFLoader instead.' );
 
 		}
 
@@ -441,7 +442,7 @@ THREE.GLTFLoader = ( function () {
 
 		if ( this.content === null ) {
 
-			throw new Error( 'THREE.GLTFLoader: JSON content not found.' );
+			throw new Error( 'GLTFLoader: JSON content not found.' );
 
 		}
 
@@ -455,8 +456,13 @@ THREE.GLTFLoader = ( function () {
 	function GLTFDracoMeshCompressionExtension( json, dracoLoader ) {
 
 		if ( ! dracoLoader ) {
+			//create the draco loader if necessary. needs to add resource release
+			DRACOLoader.setDecoderPath("draco");
+			DRACOLoader.setDecoderConfig({type: 'js'});
+			
+			dracoLoader = new DRACOLoader();
 
-			throw new Error( 'THREE.GLTFLoader: No DRACOLoader instance provided.' );
+			//throw new Error( 'GLTFLoader: No DRACOLoader instance provided.' );
 
 		}
 
@@ -1184,7 +1190,7 @@ THREE.GLTFLoader = ( function () {
 
 			} else {
 
-				console.warn( 'THREE.GLTFLoader: Ignoring primitive type .extras, ' + gltfDef.extras );
+				console.warn( 'GLTFLoader: Ignoring primitive type .extras, ' + gltfDef.extras );
 
 			}
 
@@ -1344,7 +1350,7 @@ THREE.GLTFLoader = ( function () {
 
 			} else {
 
-				console.warn( 'THREE.GLTFLoader: Invalid extras.targetNames length. Ignoring names.' );
+				console.warn( 'GLTFLoader: Invalid extras.targetNames length. Ignoring names.' );
 
 			}
 
@@ -1762,7 +1768,7 @@ THREE.GLTFLoader = ( function () {
 
 		if ( bufferDef.type && bufferDef.type !== 'arraybuffer' ) {
 
-			throw new Error( 'THREE.GLTFLoader: ' + bufferDef.type + ' buffer type is not supported.' );
+			throw new Error( 'GLTFLoader: ' + bufferDef.type + ' buffer type is not supported.' );
 
 		}
 
@@ -1779,7 +1785,7 @@ THREE.GLTFLoader = ( function () {
 
 			loader.load( resolveURL( bufferDef.uri, options.path ), resolve, undefined, function () {
 
-				reject( new Error( 'THREE.GLTFLoader: Failed to load buffer "' + bufferDef.uri + '".' ) );
+				reject( new Error( 'GLTFLoader: Failed to load buffer "' + bufferDef.uri + '".' ) );
 
 			} );
 
@@ -1924,7 +1930,7 @@ THREE.GLTFLoader = ( function () {
 					if ( itemSize >= 2 ) bufferAttribute.setY( index, sparseValues[ i * itemSize + 1 ] );
 					if ( itemSize >= 3 ) bufferAttribute.setZ( index, sparseValues[ i * itemSize + 2 ] );
 					if ( itemSize >= 4 ) bufferAttribute.setW( index, sparseValues[ i * itemSize + 3 ] );
-					if ( itemSize >= 5 ) throw new Error( 'THREE.GLTFLoader: Unsupported itemSize in sparse BufferAttribute.' );
+					if ( itemSize >= 5 ) throw new Error( 'GLTFLoader: Unsupported itemSize in sparse BufferAttribute.' );
 
 				}
 
@@ -2384,8 +2390,8 @@ THREE.GLTFLoader = ( function () {
 
 					return [ geometry ];
 
-				} else if ( geometries.length > 1 && THREE.BufferGeometryUtils !== undefined ) {
-
+				} else if ( geometries.length > 1 && false ) { // Dont use BufferGeometryUtils
+                    /*
 					// Tries to merge geometries with BufferGeometryUtils if possible
 
 					for ( var i = 1, il = primitives.length; i < il; i ++ ) {
@@ -2412,7 +2418,7 @@ THREE.GLTFLoader = ( function () {
 						if ( geometry !== null ) return [ geometry ];
 
 					}
-
+                    */
 				}
 
 				return geometries;
@@ -2509,7 +2515,7 @@ THREE.GLTFLoader = ( function () {
 
 					} else {
 
-						throw new Error( 'THREE.GLTFLoader: Primitive mode unsupported: ' + primitive.mode );
+						throw new Error( 'GLTFLoader: Primitive mode unsupported: ' + primitive.mode );
 
 					}
 
@@ -2622,7 +2628,7 @@ THREE.GLTFLoader = ( function () {
 
 						if ( material.aoMap && geometry.attributes.uv2 === undefined && geometry.attributes.uv !== undefined ) {
 
-							console.log( 'THREE.GLTFLoader: Duplicating UVs to support aoMap.' );
+							console.log( 'GLTFLoader: Duplicating UVs to support aoMap.' );
 							geometry.addAttribute( 'uv2', new THREE.BufferAttribute( geometry.attributes.uv.array, 2 ) );
 
 						}
@@ -2675,7 +2681,7 @@ THREE.GLTFLoader = ( function () {
 
 		if ( ! params ) {
 
-			console.warn( 'THREE.GLTFLoader: Missing camera parameters.' );
+			console.warn( 'GLTFLoader: Missing camera parameters.' );
 			return;
 
 		}
@@ -3036,7 +3042,7 @@ THREE.GLTFLoader = ( function () {
 
 						} else {
 
-							console.warn( 'THREE.GLTFLoader: Joint "%s" could not be found.', jointId );
+							console.warn( 'GLTFLoader: Joint "%s" could not be found.', jointId );
 
 						}
 
@@ -3103,6 +3109,6 @@ THREE.GLTFLoader = ( function () {
 
 	}();
 
-	return GLTFLoader;
+//return GLTFLoader;
 
-} )();
+export {GLTFLoader};

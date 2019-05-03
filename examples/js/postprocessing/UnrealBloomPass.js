@@ -4,9 +4,14 @@
  * Inspired from Unreal Engine
  * https://docs.unrealengine.com/latest/INT/Engine/Rendering/PostProcessEffects/Bloom/
  */
-THREE.UnrealBloomPass = function ( resolution, strength, radius, threshold ) {
+import {Pass} from "./Pass.js";
+import {CopyShader} from "./CopyShader.js";
+import {LuminosityHighPassShader} from "./LuminosityHighPassShader.js";
+import {UniformsUtils} from "./UniformsUtils.js";
 
-	THREE.Pass.call( this );
+var UnrealBloomPass = function ( resolution, strength, radius, threshold ) {
+
+	Pass.call( this );
 
 	this.strength = ( strength !== undefined ) ? strength : 1;
 	this.radius = radius;
@@ -52,11 +57,11 @@ THREE.UnrealBloomPass = function ( resolution, strength, radius, threshold ) {
 
 	// luminosity high pass material
 
-	if ( THREE.LuminosityHighPassShader === undefined )
-		console.error( "THREE.UnrealBloomPass relies on THREE.LuminosityHighPassShader" );
+	if ( LuminosityHighPassShader === undefined )
+		console.error( "UnrealBloomPass relies on LuminosityHighPassShader" );
 
-	var highPassShader = THREE.LuminosityHighPassShader;
-	this.highPassUniforms = THREE.UniformsUtils.clone( highPassShader.uniforms );
+	var highPassShader = LuminosityHighPassShader;
+	this.highPassUniforms = UniformsUtils.clone( highPassShader.uniforms );
 
 	this.highPassUniforms[ "luminosityThreshold" ].value = threshold;
 	this.highPassUniforms[ "smoothWidth" ].value = 0.01;
@@ -104,15 +109,15 @@ THREE.UnrealBloomPass = function ( resolution, strength, radius, threshold ) {
 	this.compositeMaterial.uniforms[ "bloomTintColors" ].value = this.bloomTintColors;
 
 	// copy material
-	if ( THREE.CopyShader === undefined ) {
+	if ( CopyShader === undefined ) {
 
-		console.error( "THREE.BloomPass relies on THREE.CopyShader" );
+		console.error( "UnrealBloomPass relies on CopyShader" );
 
 	}
 
-	var copyShader = THREE.CopyShader;
+	var copyShader = CopyShader;
 
-	this.copyUniforms = THREE.UniformsUtils.clone( copyShader.uniforms );
+	this.copyUniforms = UniformsUtils.clone( copyShader.uniforms );
 	this.copyUniforms[ "opacity" ].value = 1.0;
 
 	this.materialCopy = new THREE.ShaderMaterial( {
@@ -142,9 +147,9 @@ THREE.UnrealBloomPass = function ( resolution, strength, radius, threshold ) {
 
 };
 
-THREE.UnrealBloomPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+UnrealBloomPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 
-	constructor: THREE.UnrealBloomPass,
+	constructor: UnrealBloomPass,
 
 	dispose: function () {
 
@@ -224,11 +229,11 @@ THREE.UnrealBloomPass.prototype = Object.assign( Object.create( THREE.Pass.proto
 			this.quad.material = this.separableBlurMaterials[ i ];
 
 			this.separableBlurMaterials[ i ].uniforms[ "colorTexture" ].value = inputRenderTarget.texture;
-			this.separableBlurMaterials[ i ].uniforms[ "direction" ].value = THREE.UnrealBloomPass.BlurDirectionX;
+			this.separableBlurMaterials[ i ].uniforms[ "direction" ].value = UnrealBloomPass.BlurDirectionX;
 			renderer.render( this.scene, this.camera, this.renderTargetsHorizontal[ i ], true );
 
 			this.separableBlurMaterials[ i ].uniforms[ "colorTexture" ].value = this.renderTargetsHorizontal[ i ].texture;
-			this.separableBlurMaterials[ i ].uniforms[ "direction" ].value = THREE.UnrealBloomPass.BlurDirectionY;
+			this.separableBlurMaterials[ i ].uniforms[ "direction" ].value = UnrealBloomPass.BlurDirectionY;
 			renderer.render( this.scene, this.camera, this.renderTargetsVertical[ i ], true );
 
 			inputRenderTarget = this.renderTargetsVertical[ i ];
@@ -380,5 +385,6 @@ THREE.UnrealBloomPass.prototype = Object.assign( Object.create( THREE.Pass.proto
 
 } );
 
-THREE.UnrealBloomPass.BlurDirectionX = new THREE.Vector2( 1.0, 0.0 );
-THREE.UnrealBloomPass.BlurDirectionY = new THREE.Vector2( 0.0, 1.0 );
+UnrealBloomPass.BlurDirectionX = new THREE.Vector2( 1.0, 0.0 );
+UnrealBloomPass.BlurDirectionY = new THREE.Vector2( 0.0, 1.0 );
+export {UnrealBloomPass};

@@ -6,7 +6,7 @@
  * http://o3d.googlecode.com/svn/trunk/samples/convolution.html
  */
 
-THREE.ConvolutionShader = {
+var ConvolutionShader = {
 
 	defines: {
 
@@ -99,3 +99,4 @@ THREE.ConvolutionShader = {
 	}
 
 };
+export {ConvolutionShader};

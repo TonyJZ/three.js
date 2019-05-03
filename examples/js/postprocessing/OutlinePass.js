@@ -1,8 +1,11 @@
 /**
  * @author spidersharma / http://eduperiment.com/
  */
+import {Pass} from "./Pass.js";
+import {CopyShader} from "./CopyShader.js";
+import {UniformsUtils} from "./UniformsUtils.js";
 
-THREE.OutlinePass = function ( resolution, scene, camera, selectedObjects ) {
+var OutlinePass = function ( resolution, scene, camera, selectedObjects ) {
 
 	this.renderScene = scene;
 	this.renderCamera = camera;
@@ -15,8 +18,9 @@ THREE.OutlinePass = function ( resolution, scene, camera, selectedObjects ) {
 	this.edgeStrength = 3.0;
 	this.downSampleRatio = 2;
 	this.pulsePeriod = 0;
+	this.setDifffernthiddenColor = false;
 
-	THREE.Pass.call( this );
+	Pass.call( this );
 
 	this.resolution = ( resolution !== undefined ) ? new THREE.Vector2( resolution.x, resolution.y ) : new THREE.Vector2( 256, 256 );
 
@@ -39,6 +43,9 @@ THREE.OutlinePass = function ( resolution, scene, camera, selectedObjects ) {
 	this.prepareMaskMaterial = this.getPrepareMaskMaterial();
 	this.prepareMaskMaterial.side = THREE.DoubleSide;
 	this.prepareMaskMaterial.fragmentShader = replaceDepthToViewZ( this.prepareMaskMaterial.fragmentShader, this.renderCamera );
+
+	this.prepareMaskMaterialWithoutDepth = this.getPrepareMaskMaterialWithoutDepth();
+	this.prepareMaskMaterialWithoutDepth.side = THREE.DoubleSide;
 
 	this.renderTargetDepthBuffer = new THREE.WebGLRenderTarget( this.resolution.x, this.resolution.y, pars );
 	this.renderTargetDepthBuffer.texture.name = "OutlinePass.depth";
@@ -77,12 +84,12 @@ THREE.OutlinePass = function ( resolution, scene, camera, selectedObjects ) {
 	this.overlayMaterial = this.getOverlayMaterial();
 
 	// copy material
-	if ( THREE.CopyShader === undefined )
-		console.error( "THREE.OutlinePass relies on THREE.CopyShader" );
+	if ( CopyShader === undefined )
+		console.error( "OutlinePass relies on CopyShader" );
 
-	var copyShader = THREE.CopyShader;
+	var copyShader = CopyShader;
 
-	this.copyUniforms = THREE.UniformsUtils.clone( copyShader.uniforms );
+	this.copyUniforms = UniformsUtils.clone( copyShader.uniforms );
 	this.copyUniforms[ "opacity" ].value = 1.0;
 
 	this.materialCopy = new THREE.ShaderMaterial( {
@@ -122,9 +129,9 @@ THREE.OutlinePass = function ( resolution, scene, camera, selectedObjects ) {
 
 };
 
-THREE.OutlinePass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+OutlinePass.prototype = Object.assign( Object.create( Pass.prototype ), {
 
-	constructor: THREE.OutlinePass,
+	constructor: OutlinePass,
 
 	dispose: function () {
 
@@ -162,21 +169,26 @@ THREE.OutlinePass.prototype = Object.assign( Object.create( THREE.Pass.prototype
 	changeVisibilityOfSelectedObjects: function ( bVisible ) {
 
 		function gatherSelectedMeshesCallBack( object ) {
+			if(object.enableOutline !== undefined && object.enableOutline === false) {
 
-			if ( object.isMesh ) {
+			}
+			else {
+				if ( object.isMesh ) {
 
-				if ( bVisible ) {
-
-					object.visible = object.userData.oldVisible;
-					delete object.userData.oldVisible;
-
-				} else {
-
-					object.userData.oldVisible = object.visible;
-					object.visible = bVisible;
-
+					if ( bVisible ) {
+	
+						object.visible = object.userData.oldVisible;
+						delete object.userData.oldVisible;
+	
+					} else {
+	
+						object.userData.oldVisible = object.visible;
+						object.visible = bVisible;
+	
+					}
+	
 				}
-
+	
 			}
 
 		}
@@ -196,8 +208,13 @@ THREE.OutlinePass.prototype = Object.assign( Object.create( THREE.Pass.prototype
 
 		function gatherSelectedMeshesCallBack( object ) {
 
-			if ( object.isMesh ) selectedMeshes.push( object );
+			if ( object.isMesh ) {
+				if(object.enableOutline !== undefined && object.enableOutline === false) {
 
+				}
+				else
+					selectedMeshes.push( object );
+			}
 		}
 
 		for ( var i = 0; i < this.selectedObjects.length; i ++ ) {
@@ -237,7 +254,14 @@ THREE.OutlinePass.prototype = Object.assign( Object.create( THREE.Pass.prototype
 				}
 
 			}
+			else if(object.type === 'TransformControlsGizmo' || object.isGPUParticleContainer) {
+				var visibility = object.visible;
 
+				if ( ! bVisible || object.bVisible ) object.visible = bVisible;
+
+				object.bVisible = visibility;
+			}
+		
 		}
 
 		this.renderScene.traverse( VisibilityChangeCallBack );
@@ -269,28 +293,36 @@ THREE.OutlinePass.prototype = Object.assign( Object.create( THREE.Pass.prototype
 
 			renderer.setClearColor( 0xffffff, 1 );
 
-			// Make selected objects invisible
-			this.changeVisibilityOfSelectedObjects( false );
-
+			//Change the background
 			var currentBackground = this.renderScene.background;
 			this.renderScene.background = null;
+			
+			if(this.setDifffernthiddenColor){
+				// Make selected objects invisible
+				this.changeVisibilityOfSelectedObjects( false );
 
-			// 1. Draw Non Selected objects in the depth buffer
-			this.renderScene.overrideMaterial = this.depthMaterial;
-			renderer.render( this.renderScene, this.renderCamera, this.renderTargetDepthBuffer, true );
 
-			// Make selected objects visible
-			this.changeVisibilityOfSelectedObjects( true );
+				// 1. Draw Non Selected objects in the depth buffer
+				this.renderScene.overrideMaterial = this.depthMaterial;
+				renderer.render( this.renderScene, this.renderCamera, this.renderTargetDepthBuffer, true );
+
+				// Make selected objects visible
+				this.changeVisibilityOfSelectedObjects( true );
+			}
 
 			// Update Texture Matrix for Depth compare
 			this.updateTextureMatrix();
 
 			// Make non selected objects invisible, and draw only the selected objects, by comparing the depth buffer of non selected objects
 			this.changeVisibilityOfNonSelectedObjects( false );
-			this.renderScene.overrideMaterial = this.prepareMaskMaterial;
-			this.prepareMaskMaterial.uniforms[ "cameraNearFar" ].value = new THREE.Vector2( this.renderCamera.near, this.renderCamera.far );
-			this.prepareMaskMaterial.uniforms[ "depthTexture" ].value = this.renderTargetDepthBuffer.texture;
-			this.prepareMaskMaterial.uniforms[ "textureMatrix" ].value = this.textureMatrix;
+			if (this.setDifffernthiddenColor){
+				this.renderScene.overrideMaterial = this.prepareMaskMaterial;
+				this.prepareMaskMaterial.uniforms[ "cameraNearFar" ].value = new THREE.Vector2( this.renderCamera.near, this.renderCamera.far );
+				this.prepareMaskMaterial.uniforms[ "depthTexture" ].value = this.renderTargetDepthBuffer.texture;
+				this.prepareMaskMaterial.uniforms[ "textureMatrix" ].value = this.textureMatrix;
+			} else {
+				this.renderScene.overrideMaterial = this.prepareMaskMaterialWithoutDepth;
+			}
 			renderer.render( this.renderScene, this.renderCamera, this.renderTargetMaskBuffer, true );
 			this.renderScene.overrideMaterial = null;
 			this.changeVisibilityOfNonSelectedObjects( true );
@@ -324,20 +356,20 @@ THREE.OutlinePass.prototype = Object.assign( Object.create( THREE.Pass.prototype
 			// 4. Apply Blur on Half res
 			this.quad.material = this.separableBlurMaterial1;
 			this.separableBlurMaterial1.uniforms[ "colorTexture" ].value = this.renderTargetEdgeBuffer1.texture;
-			this.separableBlurMaterial1.uniforms[ "direction" ].value = THREE.OutlinePass.BlurDirectionX;
+			this.separableBlurMaterial1.uniforms[ "direction" ].value = OutlinePass.BlurDirectionX;
 			this.separableBlurMaterial1.uniforms[ "kernelRadius" ].value = this.edgeThickness;
 			renderer.render( this.scene, this.camera, this.renderTargetBlurBuffer1, true );
 			this.separableBlurMaterial1.uniforms[ "colorTexture" ].value = this.renderTargetBlurBuffer1.texture;
-			this.separableBlurMaterial1.uniforms[ "direction" ].value = THREE.OutlinePass.BlurDirectionY;
+			this.separableBlurMaterial1.uniforms[ "direction" ].value = OutlinePass.BlurDirectionY;
 			renderer.render( this.scene, this.camera, this.renderTargetEdgeBuffer1, true );
 
 			// Apply Blur on quarter res
 			this.quad.material = this.separableBlurMaterial2;
 			this.separableBlurMaterial2.uniforms[ "colorTexture" ].value = this.renderTargetEdgeBuffer1.texture;
-			this.separableBlurMaterial2.uniforms[ "direction" ].value = THREE.OutlinePass.BlurDirectionX;
+			this.separableBlurMaterial2.uniforms[ "direction" ].value = OutlinePass.BlurDirectionX;
 			renderer.render( this.scene, this.camera, this.renderTargetBlurBuffer2, true );
 			this.separableBlurMaterial2.uniforms[ "colorTexture" ].value = this.renderTargetBlurBuffer2.texture;
-			this.separableBlurMaterial2.uniforms[ "direction" ].value = THREE.OutlinePass.BlurDirectionY;
+			this.separableBlurMaterial2.uniforms[ "direction" ].value = OutlinePass.BlurDirectionY;
 			renderer.render( this.scene, this.camera, this.renderTargetEdgeBuffer2, true );
 
 			// Blend it additively over the input texture
@@ -415,6 +447,38 @@ THREE.OutlinePass.prototype = Object.assign( Object.create( THREE.Pass.prototype
 		} );
 
 	},
+	getPrepareMaskMaterialWithoutDepth: function () {
+
+		return new THREE.ShaderMaterial( {
+
+			uniforms: {
+			},
+
+			vertexShader: [
+				'void main() {',
+
+				'	gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+
+				'}'
+			].join( '\n' ),
+
+			fragmentShader: [
+
+				'void main() {',
+
+				'	gl_FragColor = vec4(0.0, 0, 1.0, 1.0);',
+
+				'}'
+			].join( '\n' )
+
+		} );
+
+	},
+
+
+
+
+
 
 	getEdgeDetectionMaterial: function () {
 
@@ -567,5 +631,7 @@ THREE.OutlinePass.prototype = Object.assign( Object.create( THREE.Pass.prototype
 
 } );
 
-THREE.OutlinePass.BlurDirectionX = new THREE.Vector2( 1.0, 0.0 );
-THREE.OutlinePass.BlurDirectionY = new THREE.Vector2( 0.0, 1.0 );
+OutlinePass.BlurDirectionX = new THREE.Vector2( 1.0, 0.0 );
+OutlinePass.BlurDirectionY = new THREE.Vector2( 0.0, 1.0 );
+
+export {OutlinePass};
