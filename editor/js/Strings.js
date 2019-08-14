@@ -135,6 +135,16 @@ var Strings = function ( config ) {
 			'sidebar/geometry/cylinder_geometry/heightsegments': 'Height segments',
 			'sidebar/geometry/cylinder_geometry/openended': 'Open ended',
 
+			'sidebar/geometry/extrude_geometry/curveSegments': 'Curve Segments',
+			'sidebar/geometry/extrude_geometry/steps': 'Steps',
+			'sidebar/geometry/extrude_geometry/depth': 'Depth',
+			'sidebar/geometry/extrude_geometry/bevelEnabled': 'Bevel?',
+			'sidebar/geometry/extrude_geometry/bevelThickness': 'Thickness',
+			'sidebar/geometry/extrude_geometry/bevelSize': 'Size',
+			'sidebar/geometry/extrude_geometry/bevelOffset': 'Offset',
+			'sidebar/geometry/extrude_geometry/bevelSegments': 'Segments',
+			'sidebar/geometry/extrude_geometry/shape': 'Convert to Shape',
+
 			'sidebar/geometry/geometry/vertices': 'Vertices',
 			'sidebar/geometry/geometry/faces': 'Faces',
 
@@ -163,6 +173,9 @@ var Strings = function ( config ) {
 			'sidebar/geometry/ring_geometry/phiSegments': 'Phi segments',
 			'sidebar/geometry/ring_geometry/thetastart': 'Theta start',
 			'sidebar/geometry/ring_geometry/thetalength': 'Theta length',
+
+			'sidebar/geometry/shape_geometry/curveSegments': 'Curve Segments',
+			'sidebar/geometry/shape_geometry/extrude': 'Extrude',
 
 			'sidebar/geometry/sphere_geometry/radius': 'Radius',
 			'sidebar/geometry/sphere_geometry/widthsegments': 'Width segments',
@@ -223,6 +236,7 @@ var Strings = function ( config ) {
 			'sidebar/material/alphamap': 'Alpha Map',
 			'sidebar/material/bumpmap': 'Bump Map',
 			'sidebar/material/normalmap': 'Normal Map',
+			'sidebar/material/clearcoatnormalmap': 'ClearCoat Normal Map',
 			'sidebar/material/displacemap': 'Displace Map',
 			'sidebar/material/roughmap': 'Rough. Map',
 			'sidebar/material/metalmap': 'Metal. Map',
@@ -494,6 +508,7 @@ var Strings = function ( config ) {
 			'sidebar/material/alphamap': '透明贴图',
 			'sidebar/material/bumpmap': '凹凸贴图',
 			'sidebar/material/normalmap': '法线贴图',
+			'sidebar/material/clearcoatnormalmap': 'ClearCoat Normal Map',
 			'sidebar/material/displacemap': '置换贴图',
 			'sidebar/material/roughmap': '粗糙贴图',
 			'sidebar/material/metalmap': '金属贴图',
