@@ -2,7 +2,7 @@
  * @author alteredq / http://alteredqualia.com/
  */
 
-THREE.SceneUtils = {
+var SceneUtils = {
 
 	createMultiMaterialObject: function ( geometry, materials ) {
 
@@ -36,3 +36,4 @@ THREE.SceneUtils = {
 	}
 
 };
+export {SceneUtils};

@@ -6,8 +6,9 @@
  * 	http://graphicsrunner.blogspot.de/2010/08/water-using-flow-maps.html
  *
  */
-
-THREE.Water = function ( geometry, options ) {
+import {Reflector} from "./Reflector.js";
+import {Refractor} from "./Refractor.js";
+function Water2 ( geometry, options ) {
 
 	THREE.Mesh.call( this, geometry );
 
@@ -25,7 +26,7 @@ THREE.Water = function ( geometry, options ) {
 	var flowSpeed = options.flowSpeed || 0.03;
 	var reflectivity = options.reflectivity || 0.02;
 	var scale = options.scale || 1;
-	var shader = options.shader || THREE.Water.WaterShader;
+	var shader = options.shader || Water2.WaterShader;
 
 	var textureLoader = new THREE.TextureLoader();
 
@@ -40,27 +41,27 @@ THREE.Water = function ( geometry, options ) {
 
 	// internal components
 
-	if ( THREE.Reflector === undefined ) {
+	if ( Reflector === undefined ) {
 
-		console.error( 'THREE.Water: Required component THREE.Reflector not found.' );
+		console.error( 'Water2: Required component Reflector not found.' );
 		return;
 
 	}
 
-	if ( THREE.Refractor === undefined ) {
+	if ( Refractor === undefined ) {
 
-		console.error( 'THREE.Water: Required component THREE.Refractor not found.' );
+		console.error( 'Water2: Required component Refractor not found.' );
 		return;
 
 	}
 
-	var reflector = new THREE.Reflector( geometry, {
+	var reflector = new Reflector( geometry, {
 		textureWidth: textureWidth,
 		textureHeight: textureHeight,
 		clipBias: clipBias
 	} );
 
-	var refractor = new THREE.Refractor( geometry, {
+	var refractor = new Refractor( geometry, {
 		textureWidth: textureWidth,
 		textureHeight: textureHeight,
 		clipBias: clipBias
@@ -85,14 +86,14 @@ THREE.Water = function ( geometry, options ) {
 	if ( flowMap !== undefined ) {
 
 		this.material.defines.USE_FLOWMAP = '';
-		this.material.uniforms[ "tFlowMap" ] = {
+		this.material.uniforms.tFlowMap = {
 			type: 't',
 			value: flowMap
 		};
 
 	} else {
 
-		this.material.uniforms[ "flowDirection" ] = {
+		this.material.uniforms.flowDirection = {
 			type: 'v2',
 			value: flowDirection
 		};
@@ -104,23 +105,23 @@ THREE.Water = function ( geometry, options ) {
 	normalMap0.wrapS = normalMap0.wrapT = THREE.RepeatWrapping;
 	normalMap1.wrapS = normalMap1.wrapT = THREE.RepeatWrapping;
 
-	this.material.uniforms[ "tReflectionMap" ].value = reflector.getRenderTarget().texture;
-	this.material.uniforms[ "tRefractionMap" ].value = refractor.getRenderTarget().texture;
-	this.material.uniforms[ "tNormalMap0" ].value = normalMap0;
-	this.material.uniforms[ "tNormalMap1" ].value = normalMap1;
+	this.material.uniforms.tReflectionMap.value = reflector.getRenderTarget().texture;
+	this.material.uniforms.tRefractionMap.value = refractor.getRenderTarget().texture;
+	this.material.uniforms.tNormalMap0.value = normalMap0;
+	this.material.uniforms.tNormalMap1.value = normalMap1;
 
 	// water
 
-	this.material.uniforms[ "color" ].value = color;
-	this.material.uniforms[ "reflectivity" ].value = reflectivity;
-	this.material.uniforms[ "textureMatrix" ].value = textureMatrix;
+	this.material.uniforms.color.value = color;
+	this.material.uniforms.reflectivity.value = reflectivity;
+	this.material.uniforms.textureMatrix.value = textureMatrix;
 
 	// inital values
 
-	this.material.uniforms[ "config" ].value.x = 0; // flowMapOffset0
-	this.material.uniforms[ "config" ].value.y = halfCycle; // flowMapOffset1
-	this.material.uniforms[ "config" ].value.z = halfCycle; // halfCycle
-	this.material.uniforms[ "config" ].value.w = scale; // scale
+	this.material.uniforms.config.value.x = 0; // flowMapOffset0
+	this.material.uniforms.config.value.y = halfCycle; // flowMapOffset1
+	this.material.uniforms.config.value.z = halfCycle; // halfCycle
+	this.material.uniforms.config.value.w = scale; // scale
 
 	// functions
 
@@ -142,7 +143,7 @@ THREE.Water = function ( geometry, options ) {
 	function updateFlow() {
 
 		var delta = clock.getDelta();
-		var config = scope.material.uniforms[ "config" ];
+		var config = scope.material.uniforms.config;
 
 		config.value.x += flowSpeed * delta; // flowMapOffset0
 		config.value.y = config.value.x + halfCycle; // flowMapOffset1
@@ -185,10 +186,10 @@ THREE.Water = function ( geometry, options ) {
 
 };
 
-THREE.Water.prototype = Object.create( THREE.Mesh.prototype );
-THREE.Water.prototype.constructor = THREE.Water;
+Water2.prototype = Object.create( THREE.Mesh.prototype );
+Water2.prototype.constructor = Water2;
 
-THREE.Water.WaterShader = {
+Water2.WaterShader = {
 
 	uniforms: {
 
@@ -336,3 +337,4 @@ THREE.Water.WaterShader = {
 
 	].join( '\n' )
 };
+export { Water2 };

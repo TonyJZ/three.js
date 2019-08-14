@@ -995,3 +995,4 @@ UI.Button.prototype.setLabel = function ( value ) {
 	return this;
 
 };
+export {UI};

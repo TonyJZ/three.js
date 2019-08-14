@@ -6,7 +6,7 @@
  * https://github.com/iryoku/smaa/releases/tag/v2.8
  */
 
-THREE.SMAAShader = [ {
+var SMAAShader = [ {
 
 	defines: {
 
@@ -460,3 +460,4 @@ THREE.SMAAShader = [ {
 	].join("\n")
 
 } ];
+export {SMAAShader};

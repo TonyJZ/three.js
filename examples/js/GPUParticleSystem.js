@@ -15,7 +15,7 @@
  *
  */
 
-THREE.GPUParticleSystem = function ( options ) {
+var GPUParticleSystem = function ( options ) {
 
 	THREE.Object3D.apply( this, arguments );
 
@@ -209,7 +209,7 @@ THREE.GPUParticleSystem = function ( options ) {
 
 		for ( var i = 0; i < this.PARTICLE_CONTAINERS; i ++ ) {
 
-			var c = new THREE.GPUParticleContainer( this.PARTICLES_PER_CONTAINER, this );
+			var c = new GPUParticleContainer( this.PARTICLES_PER_CONTAINER, this );
 			this.particleContainers.push( c );
 			this.add( c );
 
@@ -261,13 +261,13 @@ THREE.GPUParticleSystem = function ( options ) {
 
 };
 
-THREE.GPUParticleSystem.prototype = Object.create( THREE.Object3D.prototype );
-THREE.GPUParticleSystem.prototype.constructor = THREE.GPUParticleSystem;
+GPUParticleSystem.prototype = Object.create( THREE.Object3D.prototype );
+GPUParticleSystem.prototype.constructor = GPUParticleSystem;
 
 
 // Subclass for particle containers, allows for very large arrays to be spread out
 
-THREE.GPUParticleContainer = function ( maxParticles, particleSystem ) {
+var GPUParticleContainer = function ( maxParticles, particleSystem ) {
 
 	THREE.Object3D.apply( this, arguments );
 
@@ -497,5 +497,7 @@ THREE.GPUParticleContainer = function ( maxParticles, particleSystem ) {
 
 };
 
-THREE.GPUParticleContainer.prototype = Object.create( THREE.Object3D.prototype );
-THREE.GPUParticleContainer.prototype.constructor = THREE.GPUParticleContainer;
+GPUParticleContainer.prototype = Object.create( THREE.Object3D.prototype );
+GPUParticleContainer.prototype.constructor = GPUParticleContainer;
+GPUParticleContainer.prototype.isGPUParticleContainer = true;
+export {GPUParticleSystem, GPUParticleContainer}

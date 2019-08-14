@@ -9,10 +9,12 @@
 * References: https://en.wikipedia.org/wiki/Supersampling
 *
 */
+import {Pass} from "./Pass.js";
+import {CopyShader} from "./CopyShader.js"
 
-THREE.SSAARenderPass = function ( scene, camera, clearColor, clearAlpha ) {
+var SSAARenderPass = function ( scene, camera, clearColor, clearAlpha ) {
 
-	THREE.Pass.call( this );
+	Pass.call( this );
 
 	this.scene = scene;
 	this.camera = camera;
@@ -24,9 +26,9 @@ THREE.SSAARenderPass = function ( scene, camera, clearColor, clearAlpha ) {
 	this.clearColor = ( clearColor !== undefined ) ? clearColor : 0x000000;
 	this.clearAlpha = ( clearAlpha !== undefined ) ? clearAlpha : 0;
 
-	if ( THREE.CopyShader === undefined ) console.error( "THREE.SSAARenderPass relies on THREE.CopyShader" );
+	if ( CopyShader === undefined ) console.error( "SSAARenderPass relies on CopyShader" );
 
-	var copyShader = THREE.CopyShader;
+	var copyShader = CopyShader;
 	this.copyUniforms = THREE.UniformsUtils.clone( copyShader.uniforms );
 
 	this.copyMaterial = new THREE.ShaderMaterial(	{
@@ -40,13 +42,13 @@ THREE.SSAARenderPass = function ( scene, camera, clearColor, clearAlpha ) {
 		depthWrite: false
 	} );
 
-	this.fsQuad = new THREE.Pass.FullScreenQuad( this.copyMaterial );
+	this.fsQuad = new Pass.FullScreenQuad( this.copyMaterial );
 
 };
 
-THREE.SSAARenderPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+SSAARenderPass.prototype = Object.assign( Object.create( Pass.prototype ), {
 
-	constructor: THREE.SSAARenderPass,
+	constructor: SSAARenderPass,
 
 	dispose: function () {
 
@@ -74,7 +76,7 @@ THREE.SSAARenderPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 
 		}
 
-		var jitterOffsets = THREE.SSAARenderPass.JitterVectors[ Math.max( 0, Math.min( this.sampleLevel, 5 ) ) ];
+		var jitterOffsets = SSAARenderPass.JitterVectors[ Math.max( 0, Math.min( this.sampleLevel, 5 ) ) ];
 
 		var autoClear = renderer.autoClear;
 		renderer.autoClear = false;
@@ -148,7 +150,7 @@ THREE.SSAARenderPass.prototype = Object.assign( Object.create( THREE.Pass.protot
 // before being used, thus these integers need to be scaled by 1/16.
 //
 // Sample patterns reference: https://msdn.microsoft.com/en-us/library/windows/desktop/ff476218%28v=vs.85%29.aspx?f=255&MSPPError=-2147217396
-THREE.SSAARenderPass.JitterVectors = [
+SSAARenderPass.JitterVectors = [
 	[
 		[ 0, 0 ]
 	],
@@ -179,3 +181,5 @@ THREE.SSAARenderPass.JitterVectors = [
 		[ 2, 5 ], [ 7, 5 ], [ 5, 6 ], [ 3, 7 ]
 	]
 ];
+
+export {SSAARenderPass};

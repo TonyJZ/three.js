@@ -11,7 +11,7 @@
  *	NURBS Utils
  **************************************************************/
 
-THREE.NURBSUtils = {
+var NURBSUtils = {
 
 	/*
 	Finds knot vector span.
@@ -467,3 +467,4 @@ THREE.NURBSUtils = {
 	}
 
 };
+export {NURBSUtils};

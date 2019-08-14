@@ -237,7 +237,7 @@ THREE.ShaderLib[ 'line' ] = {
 		`
 };
 
-THREE.LineMaterial = function ( parameters ) {
+function LineMaterial ( parameters ) {
 
 	THREE.ShaderMaterial.call( this, {
 
@@ -368,12 +368,12 @@ THREE.LineMaterial = function ( parameters ) {
 
 };
 
-THREE.LineMaterial.prototype = Object.create( THREE.ShaderMaterial.prototype );
-THREE.LineMaterial.prototype.constructor = THREE.LineMaterial;
+LineMaterial.prototype = Object.create( THREE.ShaderMaterial.prototype );
+LineMaterial.prototype.constructor = LineMaterial;
 
-THREE.LineMaterial.prototype.isLineMaterial = true;
+LineMaterial.prototype.isLineMaterial = true;
 
-THREE.LineMaterial.prototype.copy = function ( source ) {
+LineMaterial.prototype.copy = function ( source ) {
 
 	THREE.ShaderMaterial.prototype.copy.call( this, source );
 
@@ -388,4 +388,6 @@ THREE.LineMaterial.prototype.copy = function ( source ) {
 	return this;
 
 };
+
+export { LineMaterial };
 

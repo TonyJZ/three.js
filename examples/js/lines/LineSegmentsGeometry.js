@@ -2,8 +2,7 @@
  * @author WestLangley / http://github.com/WestLangley
  *
  */
-
-THREE.LineSegmentsGeometry = function () {
+function LineSegmentsGeometry () {
 
 	THREE.InstancedBufferGeometry.call( this );
 
@@ -21,9 +20,9 @@ THREE.LineSegmentsGeometry = function () {
 
 };
 
-THREE.LineSegmentsGeometry.prototype = Object.assign( Object.create( THREE.InstancedBufferGeometry.prototype ), {
+LineSegmentsGeometry.prototype = Object.assign( Object.create( THREE.InstancedBufferGeometry.prototype ), {
 
-	constructor: THREE.LineSegmentsGeometry,
+	constructor: LineSegmentsGeometry,
 
 	isLineSegmentsGeometry: true,
 
@@ -227,7 +226,7 @@ THREE.LineSegmentsGeometry.prototype = Object.assign( Object.create( THREE.Insta
 
 				if ( isNaN( this.boundingSphere.radius ) ) {
 
-					console.error( 'THREE.LineSegmentsGeometry.computeBoundingSphere(): Computed radius is NaN. The instanced position data is likely to have NaN values.', this );
+					console.error( 'LineSegmentsGeometry.computeBoundingSphere(): Computed radius is NaN. The instanced position data is likely to have NaN values.', this );
 
 				}
 
@@ -258,3 +257,5 @@ THREE.LineSegmentsGeometry.prototype = Object.assign( Object.create( THREE.Insta
 	}
 
 } );
+
+export { LineSegmentsGeometry };

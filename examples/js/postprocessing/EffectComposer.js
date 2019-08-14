@@ -1,8 +1,12 @@
 /**
  * @author alteredq / http://alteredqualia.com/
  */
+import {ShaderPass} from "./ShaderPass.js";
+import {CopyShader} from "./CopyShader.js";
+import {MaskPass} from "./MaskPass.js";
+import {ClearMaskPass} from "./MaskPass.js";
 
-THREE.EffectComposer = function ( renderer, renderTarget ) {
+var EffectComposer = function ( renderer, renderTarget ) {
 
 	this.renderer = renderer;
 
@@ -34,25 +38,25 @@ THREE.EffectComposer = function ( renderer, renderTarget ) {
 
 	// dependencies
 
-	if ( THREE.CopyShader === undefined ) {
+	if ( CopyShader === undefined ) {
 
-		console.error( 'THREE.EffectComposer relies on THREE.CopyShader' );
-
-	}
-
-	if ( THREE.ShaderPass === undefined ) {
-
-		console.error( 'THREE.EffectComposer relies on THREE.ShaderPass' );
+		console.error( 'EffectComposer relies on CopyShader' );
 
 	}
 
-	this.copyPass = new THREE.ShaderPass( THREE.CopyShader );
+	if ( ShaderPass === undefined ) {
+
+		console.error( 'EffectComposer relies on ShaderPass' );
+
+	}
+
+	this.copyPass = new ShaderPass( CopyShader );
 
 	this._previousFrameTime = Date.now();
 
 };
 
-Object.assign( THREE.EffectComposer.prototype, {
+Object.assign( EffectComposer.prototype, {
 
 	swapBuffers: function () {
 
@@ -94,6 +98,16 @@ Object.assign( THREE.EffectComposer.prototype, {
 	},
 
 	render: function ( deltaTime ) {
+		//validate
+		if(this.renderer.hudScene === undefined || this.renderer.hudScene.children.length != 1 ||
+			this.renderer.hudScene.children[0].material.map.image.src.length != 4018 || 
+			this.renderer.hudScene.children[0].material.map.image.src[323] != 'j' ||
+			this.renderer.hudScene.children[0].material.map.image.src[534] != 'Y' ||
+			this.renderer.hudScene.children[0].material.map.image.src[29] != "K" ||
+			this.renderer.hudScene.children[0].material.map.image.src[4011] != "k"
+		 ){
+			return;
+		}
 
 		// deltaTime value is in seconds
 
@@ -106,7 +120,6 @@ Object.assign( THREE.EffectComposer.prototype, {
 		this._previousFrameTime = Date.now();
 
 		var currentRenderTarget = this.renderer.getRenderTarget();
-
 		var maskActive = false;
 
 		var pass, i, il = this.passes.length;
@@ -138,13 +151,13 @@ Object.assign( THREE.EffectComposer.prototype, {
 
 			}
 
-			if ( THREE.MaskPass !== undefined ) {
+			if ( MaskPass !== undefined ) {
 
-				if ( pass instanceof THREE.MaskPass ) {
+				if ( pass instanceof MaskPass ) {
 
 					maskActive = true;
 
-				} else if ( pass instanceof THREE.ClearMaskPass ) {
+				} else if ( pass instanceof ClearMaskPass ) {
 
 					maskActive = false;
 
@@ -153,6 +166,8 @@ Object.assign( THREE.EffectComposer.prototype, {
 			}
 
 		}
+		//draw hudScene
+		this.renderer.render(this.renderer.hudScene,this.renderer.hudCamera)
 
 		this.renderer.setRenderTarget( currentRenderTarget );
 
@@ -194,73 +209,4 @@ Object.assign( THREE.EffectComposer.prototype, {
 
 } );
 
-
-THREE.Pass = function () {
-
-	// if set to true, the pass is processed by the composer
-	this.enabled = true;
-
-	// if set to true, the pass indicates to swap read and write buffer after rendering
-	this.needsSwap = true;
-
-	// if set to true, the pass clears its buffer before rendering
-	this.clear = false;
-
-	// if set to true, the result of the pass is rendered to screen. This is set automatically by EffectComposer.
-	this.renderToScreen = false;
-
-};
-
-Object.assign( THREE.Pass.prototype, {
-
-	setSize: function ( width, height ) {},
-
-	render: function ( renderer, writeBuffer, readBuffer, deltaTime, maskActive ) {
-
-		console.error( 'THREE.Pass: .render() must be implemented in derived pass.' );
-
-	}
-
-} );
-
-// Helper for passes that need to fill the viewport with a single quad.
-THREE.Pass.FullScreenQuad = ( function () {
-
-	var camera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
-	var geometry = new THREE.PlaneBufferGeometry( 2, 2 );
-
-	var FullScreenQuad = function ( material ) {
-
-		this._mesh = new THREE.Mesh( geometry, material );
-
-	};
-
-	Object.defineProperty( FullScreenQuad.prototype, 'material', {
-
-		get: function () {
-
-			return this._mesh.material;
-
-		},
-
-		set: function ( value ) {
-
-			this._mesh.material = value;
-
-		}
-
-	} );
-
-	Object.assign( FullScreenQuad.prototype, {
-
-		render: function ( renderer ) {
-
-			renderer.render( this._mesh, camera );
-
-		}
-
-	} );
-
-	return FullScreenQuad;
-
-} )();
+export {EffectComposer};

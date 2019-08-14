@@ -2,10 +2,10 @@
  * @author WestLangley / http://github.com/WestLangley
  *
  */
+import {LineSegmentsGeometry} from "./LineSegmentsGeometry.js";
+function WireframeGeometry2 ( geometry ) {
 
-THREE.WireframeGeometry2 = function ( geometry ) {
-
-	THREE.LineSegmentsGeometry.call( this );
+	LineSegmentsGeometry.call( this );
 
 	this.type = 'WireframeGeometry2';
 
@@ -15,9 +15,9 @@ THREE.WireframeGeometry2 = function ( geometry ) {
 
 };
 
-THREE.WireframeGeometry2.prototype = Object.assign( Object.create( THREE.LineSegmentsGeometry.prototype ), {
+WireframeGeometry2.prototype = Object.assign( Object.create( LineSegmentsGeometry.prototype ), {
 
-	constructor: THREE.WireframeGeometry2,
+	constructor: WireframeGeometry2,
 
 	isWireframeGeometry2: true,
 
@@ -30,3 +30,5 @@ THREE.WireframeGeometry2.prototype = Object.assign( Object.create( THREE.LineSeg
 	}
 
 } );
+
+export { WireframeGeometry2 };

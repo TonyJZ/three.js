@@ -2,21 +2,22 @@
  * @author WestLangley / http://github.com/WestLangley
  *
  */
-
-THREE.Wireframe = function ( geometry, material ) {
+import {LineSegmentsGeometry} from "./LineSegmentsGeometry.js";
+import {LineMaterial} from "./LineMaterial.js";
+function Wireframe ( geometry, material ) {
 
 	THREE.Mesh.call( this );
 
 	this.type = 'Wireframe';
 
-	this.geometry = geometry !== undefined ? geometry : new THREE.LineSegmentsGeometry();
-	this.material = material !== undefined ? material : new THREE.LineMaterial( { color: Math.random() * 0xffffff } );
+	this.geometry = geometry !== undefined ? geometry : new LineSegmentsGeometry();
+	this.material = material !== undefined ? material : new LineMaterial( { color: Math.random() * 0xffffff } );
 
 };
 
-THREE.Wireframe.prototype = Object.assign( Object.create( THREE.Mesh.prototype ), {
+Wireframe.prototype = Object.assign( Object.create( THREE.Mesh.prototype ), {
 
-	constructor: THREE.Wireframe,
+	constructor: Wireframe,
 
 	isWireframe: true,
 
@@ -63,3 +64,5 @@ THREE.Wireframe.prototype = Object.assign( Object.create( THREE.Mesh.prototype )
 	}
 
 } );
+
+export { Wireframe };

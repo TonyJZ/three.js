@@ -12,8 +12,8 @@
 /**************************************************************
  *	NURBS curve
  **************************************************************/
-
-THREE.NURBSCurve = function ( degree, knots /* array of reals */, controlPoints /* array of Vector(2|3|4) */, startKnot /* index in knots */, endKnot /* index in knots */ ) {
+import {NURBSUtils} from "./NURBSUtils.js"
+var NURBSCurve = function ( degree, knots /* array of reals */, controlPoints /* array of Vector(2|3|4) */, startKnot /* index in knots */, endKnot /* index in knots */ ) {
 
 	THREE.Curve.call( this );
 
@@ -34,16 +34,16 @@ THREE.NURBSCurve = function ( degree, knots /* array of reals */, controlPoints 
 };
 
 
-THREE.NURBSCurve.prototype = Object.create( THREE.Curve.prototype );
-THREE.NURBSCurve.prototype.constructor = THREE.NURBSCurve;
+NURBSCurve.prototype = Object.create( THREE.Curve.prototype );
+NURBSCurve.prototype.constructor = NURBSCurve;
 
 
-THREE.NURBSCurve.prototype.getPoint = function ( t ) {
+NURBSCurve.prototype.getPoint = function ( t ) {
 
 	var u = this.knots[ this.startKnot ] + t * ( this.knots[ this.endKnot ] - this.knots[ this.startKnot ] ); // linear mapping t->u
 
 	// following results in (wx, wy, wz, w) homogeneous point
-	var hpoint = THREE.NURBSUtils.calcBSplinePoint( this.degree, this.knots, this.controlPoints, u );
+	var hpoint = NURBSUtils.calcBSplinePoint( this.degree, this.knots, this.controlPoints, u );
 
 	if ( hpoint.w != 1.0 ) {
 
@@ -57,13 +57,14 @@ THREE.NURBSCurve.prototype.getPoint = function ( t ) {
 };
 
 
-THREE.NURBSCurve.prototype.getTangent = function ( t ) {
+NURBSCurve.prototype.getTangent = function ( t ) {
 
 	var u = this.knots[ 0 ] + t * ( this.knots[ this.knots.length - 1 ] - this.knots[ 0 ] );
-	var ders = THREE.NURBSUtils.calcNURBSDerivatives( this.degree, this.knots, this.controlPoints, u, 1 );
+	var ders = NURBSUtils.calcNURBSDerivatives( this.degree, this.knots, this.controlPoints, u, 1 );
 	var tangent = ders[ 1 ].clone();
 	tangent.normalize();
 
 	return tangent;
 
 };
+export {NURBSCurve};

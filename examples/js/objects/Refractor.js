@@ -3,7 +3,7 @@
  *
  */
 
-THREE.Refractor = function ( geometry, options ) {
+function Refractor ( geometry, options ) {
 
 	THREE.Mesh.call( this, geometry );
 
@@ -17,7 +17,9 @@ THREE.Refractor = function ( geometry, options ) {
 	var textureWidth = options.textureWidth || 512;
 	var textureHeight = options.textureHeight || 512;
 	var clipBias = options.clipBias || 0;
-	var shader = options.shader || THREE.Refractor.RefractorShader;
+	var shader = options.shader || Refractor.RefractorShader;
+
+	var upNormal = ( options.upNormal !== undefined ) ? options.upNormal : new THREE.Vector3(0, 1, 0);
 
 	//
 
@@ -56,9 +58,9 @@ THREE.Refractor = function ( geometry, options ) {
 		transparent: true // ensures, refractors are drawn from farthest to closest
 	} );
 
-	this.material.uniforms[ "color" ].value = color;
-	this.material.uniforms[ "tDiffuse" ].value = renderTarget.texture;
-	this.material.uniforms[ "textureMatrix" ].value = textureMatrix;
+	this.material.uniforms.color.value = color;
+	this.material.uniforms.tDiffuse.value = renderTarget.texture;
+	this.material.uniforms.textureMatrix.value = textureMatrix;
 
 	// functions
 
@@ -80,7 +82,8 @@ THREE.Refractor = function ( geometry, options ) {
 
 			rotationMatrix.extractRotation( scope.matrixWorld );
 
-			normal.set( 0, 0, 1 );
+			// normal.set( 0, 0, 1 );
+			normal.copy(upNormal);
 			normal.applyMatrix4( rotationMatrix );
 
 			return view.dot( normal ) < 0;
@@ -99,7 +102,7 @@ THREE.Refractor = function ( geometry, options ) {
 		return function updateRefractorPlane() {
 
 			scope.matrixWorld.decompose( position, quaternion, scale );
-			normal.set( 0, 0, 1 ).applyQuaternion( quaternion ).normalize();
+			normal.copy( upNormal ).applyQuaternion( quaternion ).normalize();
 
 			// flip the normal because we want to cull everything above the plane
 
@@ -187,7 +190,6 @@ THREE.Refractor = function ( geometry, options ) {
 	var render = ( function () {
 
 		var viewport = new THREE.Vector4();
-		var size = new THREE.Vector2();
 
 		return function render( renderer, scene, camera ) {
 
@@ -200,9 +202,7 @@ THREE.Refractor = function ( geometry, options ) {
 			renderer.vr.enabled = false; // avoid camera modification
 			renderer.shadowMap.autoUpdate = false; // avoid re-computing shadows
 
-			renderer.setRenderTarget( renderTarget );
-			renderer.clear();
-			renderer.render( scene, virtualCamera );
+			renderer.render( scene, virtualCamera, renderTarget, true );
 
 			renderer.vr.enabled = currentVrEnabled;
 			renderer.shadowMap.autoUpdate = currentShadowAutoUpdate;
@@ -214,7 +214,7 @@ THREE.Refractor = function ( geometry, options ) {
 
 			if ( bounds !== undefined ) {
 
-				renderer.getSize( size );
+				var size = renderer.getSize();
 				var pixelRatio = renderer.getPixelRatio();
 
 				viewport.x = bounds.x * size.width * pixelRatio;
@@ -264,10 +264,10 @@ THREE.Refractor = function ( geometry, options ) {
 
 };
 
-THREE.Refractor.prototype = Object.create( THREE.Mesh.prototype );
-THREE.Refractor.prototype.constructor = THREE.Refractor;
+Refractor.prototype = Object.create( THREE.Mesh.prototype );
+Refractor.prototype.constructor = Refractor;
 
-THREE.Refractor.RefractorShader = {
+Refractor.RefractorShader = {
 
 	uniforms: {
 
@@ -333,3 +333,5 @@ THREE.Refractor.RefractorShader = {
 
 	].join( '\n' )
 };
+
+export {Refractor};

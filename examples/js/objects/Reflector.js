@@ -2,7 +2,7 @@
  * @author Slayvin / http://slayvin.net
  */
 
-THREE.Reflector = function ( geometry, options ) {
+function Reflector ( geometry, options ) {
 
 	THREE.Mesh.call( this, geometry );
 
@@ -16,12 +16,13 @@ THREE.Reflector = function ( geometry, options ) {
 	var textureWidth = options.textureWidth || 512;
 	var textureHeight = options.textureHeight || 512;
 	var clipBias = options.clipBias || 0;
-	var shader = options.shader || THREE.Reflector.ReflectorShader;
+	var shader = options.shader || Reflector.ReflectorShader;
 	var recursion = options.recursion !== undefined ? options.recursion : 0;
 
 	//
 
 	var reflectorPlane = new THREE.Plane();
+	var upNormal = ( options.upNormal !== undefined ) ? options.upNormal : new THREE.Vector3(0, 1, 0);
 	var normal = new THREE.Vector3();
 	var reflectorWorldPosition = new THREE.Vector3();
 	var cameraWorldPosition = new THREE.Vector3();
@@ -33,7 +34,6 @@ THREE.Reflector = function ( geometry, options ) {
 	var view = new THREE.Vector3();
 	var target = new THREE.Vector3();
 	var q = new THREE.Vector4();
-	var size = new THREE.Vector2();
 
 	var textureMatrix = new THREE.Matrix4();
 	var virtualCamera = new THREE.PerspectiveCamera();
@@ -59,11 +59,12 @@ THREE.Reflector = function ( geometry, options ) {
 		vertexShader: shader.vertexShader
 	} );
 
-	material.uniforms[ "tDiffuse" ].value = renderTarget.texture;
-	material.uniforms[ "color" ].value = color;
-	material.uniforms[ "textureMatrix" ].value = textureMatrix;
+	material.uniforms.tDiffuse.value = renderTarget.texture;
+	material.uniforms.color.value = color;
+	material.uniforms.textureMatrix.value = textureMatrix;
 
 	this.material = material;
+	this.renderOrder = - Infinity; // render first
 
 	this.onBeforeRender = function ( renderer, scene, camera ) {
 
@@ -80,7 +81,8 @@ THREE.Reflector = function ( geometry, options ) {
 
 		rotationMatrix.extractRotation( scope.matrixWorld );
 
-		normal.set( 0, 0, 1 );
+		// normal.set( 0, 1, 0 );
+		normal.copy(upNormal);
 		normal.applyMatrix4( rotationMatrix );
 
 		view.subVectors( reflectorWorldPosition, cameraWorldPosition );
@@ -161,9 +163,7 @@ THREE.Reflector = function ( geometry, options ) {
 		renderer.vr.enabled = false; // Avoid camera modification and recursion
 		renderer.shadowMap.autoUpdate = false; // Avoid re-computing shadows
 
-		renderer.setRenderTarget( renderTarget );
-		renderer.clear();
-		renderer.render( scene, virtualCamera );
+		renderer.render( scene, virtualCamera, renderTarget, true );
 
 		renderer.vr.enabled = currentVrEnabled;
 		renderer.shadowMap.autoUpdate = currentShadowAutoUpdate;
@@ -176,7 +176,7 @@ THREE.Reflector = function ( geometry, options ) {
 
 		if ( bounds !== undefined ) {
 
-			renderer.getSize( size );
+			var size = renderer.getSize();
 			var pixelRatio = renderer.getPixelRatio();
 
 			viewport.x = bounds.x * size.width * pixelRatio;
@@ -200,10 +200,10 @@ THREE.Reflector = function ( geometry, options ) {
 
 };
 
-THREE.Reflector.prototype = Object.create( THREE.Mesh.prototype );
-THREE.Reflector.prototype.constructor = THREE.Reflector;
+Reflector.prototype = Object.create( THREE.Mesh.prototype );
+Reflector.prototype.constructor = Reflector;
 
-THREE.Reflector.ReflectorShader = {
+Reflector.ReflectorShader = {
 
 	uniforms: {
 
@@ -262,3 +262,5 @@ THREE.Reflector.ReflectorShader = {
 		'}'
 	].join( '\n' )
 };
+
+export {Reflector};
